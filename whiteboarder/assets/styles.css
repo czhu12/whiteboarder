@@ -1,0 +1,56 @@
+/* styles.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    width: 50px;
+    top: 50px;
+    padding: 4px;
+    left: 20px;
+    justify-content: space-around;
+    background: white;
+}
+.toolbar button {
+    font-size: 1.5rem;
+    padding: 10px 0;
+    border-radius: 3px;
+}
+
+.toolbar :not(:first-child) {
+    margin-top: .25rem;
+}
+
+canvas {
+    flex-grow: 1;
+    cursor: crosshair;
+    border: 1px solid #000;
+}
+
+button.active {
+    background-color: #d9dffc;
+    color: #3859ff !important;
+}
+
+button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}

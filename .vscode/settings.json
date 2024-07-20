@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "hiredis.h": "c",
+    "mongoose.h": "c"
+  }
+}
