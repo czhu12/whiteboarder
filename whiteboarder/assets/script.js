@@ -13,20 +13,46 @@ const redoButton = document.getElementById('redo');
 
 let painting = false;
 let selectedButton = 'pen';
-let strokes = [];
+let board = {
+    id: null,
+    strokes: [],
+}
 let redoStack = [];
 let currentStroke = null;
-let boardId;
 
 const path = window.location.pathname;
 const match = path.match(/^\/boards\/(.+)$/);
 
-if (match) {
-    boardId = match[1]; // Extract the ID
-    console.log(boardId);
-} else {
-    console.log("Creating a new board...")
+async function loadBoard(boardId) {
+    const response = await fetch(`/api/boards/${boardId}`, {method: 'GET', headers: {'Content-Type': 'application/json'}});
+    const data = await response.json();
+    return data
 }
+
+async function createBoard() {
+    const response = await fetch("/api/boards", {method: 'POST', headers: {'Content-Type': 'application/json'}});
+    const data = await response.json();
+    return data
+}
+
+async function saveBoard() {
+    const response = await fetch(`/api/boards/${board.id}`, {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(board)});
+    return response.status;
+}
+
+async function initializeBoard() {
+    // This is where we should show a loading bar...
+    if (match) {
+        board = await loadBoard(match[1]);
+    } else {
+        board = await createBoard();
+        window.history.replaceState(`board/${board.id}`, `Board ${board.id}`, `/boards/${board.id}`);
+    }
+
+    console.log(board)
+    redraw();
+}
+initializeBoard();
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -35,33 +61,35 @@ function startPosition(e) {
     painting = true;
     currentStroke = {
         color: brushColorPicker.value,
-        size: sizePicker.value,
+        size: parseInt(sizePicker.value),
         points: []
     };
     draw(e);
 }
 
 function undo() {
-    if (strokes.length === 0) return;
-    const stroke = strokes.pop();
+    if (board.strokes.length === 0) return;
+    const stroke = board.strokes.pop();
     redoStack.push(stroke);
     redraw();
+    saveBoard();
 }
 
 function redo() {
     if (redoStack.length === 0) return;
     const stroke = redoStack.pop();
-    strokes.push(stroke);
+    board.strokes.push(stroke);
     redraw();
+    saveBoard();
 }
 
 function endPosition() {
     painting = false;
     ctx.beginPath();
     if (currentStroke) {
-        strokes.push(currentStroke);
+        board.strokes.push(currentStroke);
         currentStroke = null;
-        save(); // Call the save function after each mouse up event
+        saveBoard(); // Call the save function after each mouse up event
     }
 }
 
@@ -85,7 +113,7 @@ function draw(e) {
 
 function redraw() {
     drawGuidelines();
-    for (const stroke of strokes) {
+    for (const stroke of board.strokes) {
         ctx.beginPath();
         ctx.lineWidth = stroke.size;
         ctx.lineCap = 'round';
@@ -105,7 +133,7 @@ function eraseStroke(e) {
     const y = e.clientY;
     const tolerance = sizePicker.value * 3; // Increase the tolerance area
 
-    strokes = strokes.filter(stroke => {
+    board.strokes = board.strokes.filter(stroke => {
         return !stroke.points.some(point => {
             const dx = point.x - x;
             const dy = point.y - y;
@@ -114,7 +142,7 @@ function eraseStroke(e) {
     });
 
     redraw();
-    save(); // Call the save function after erasing a stroke
+    saveBoard(); // Call the save function after erasing a stroke
 }
 
 canvas.addEventListener('mousedown', (e) => {
@@ -135,8 +163,8 @@ canvas.addEventListener('mousemove', (e) => {
 
 clearButton.addEventListener('click', () => {
     drawGuidelines();
-    strokes = [];
-    save(); // Call the save function after clearing the canvas
+    board.strokes = [];
+    saveBoard(); // Call the save function after clearing the canvas
 });
 
 penButton.addEventListener('click', () => {
@@ -178,13 +206,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-
-
-// TODO: Implement the save function
-function save() {
-    // This function will handle saving the canvas state
-    
-}
 
 // Function to draw the guidelines
 function drawGuidelines() {

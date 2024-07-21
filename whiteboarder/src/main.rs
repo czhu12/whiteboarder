@@ -34,6 +34,11 @@ struct Board {
     strokes: Vec<Stroke>
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+struct ErrorResponse {
+    error: String,
+}
+
 type SharedState = Arc<Mutex<redis::Client>>;
 
 #[tokio::main]
@@ -43,7 +48,7 @@ async fn main() {
 
     // build our application with a route
     let api_routes = Router::new()
-        .route("/api/board/:id", get(get_board).put(put_board))
+        .route("/api/boards/:id", get(get_board).put(put_board))
         .route("/api/boards", post(create_board))
         .with_state(state);
 
@@ -82,15 +87,17 @@ async fn put_board(
 
 async fn create_board(
     State(state): State<SharedState>,
-    Json(mut board): Json<Board>,
 ) -> impl IntoResponse {
     let id = Uuid::new_v4().to_string();
-    board.id = id.clone();
+    let board = Board {
+        id: id.clone(),
+        strokes: vec![],
+    };
     let board_data = serde_json::to_string(&board).unwrap();
     let mut conn = state.lock().await.get_multiplexed_async_connection().await.unwrap();
     let _: () = conn.set(format!("board/{}", id), board_data).await.unwrap();
 
-    Json(id)
+    Json(board)
 }
 
 async fn get_board(
@@ -101,9 +108,13 @@ async fn get_board(
 
     let key = format!("board/{}", id);
     let result: Result<String, redis::RedisError> = con.get(&key).await;
-    println!("{}", key);
     match result {
-        Ok(value) => Html(format!("<h1>Hello, World! {}</h1>", value)),
-        Err(err) => Html("Errored".to_string())
+        Ok(value) => {
+            (StatusCode::OK, Json(serde_json::from_str::<Board>(&value).unwrap())).into_response()
+        }
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse { error: String::from("Failed to parse JSON") })
+        ).into_response()
     }
 }
