@@ -184,8 +184,9 @@ window.addEventListener('resize', () => {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    drawGuidelines();
-    ctx.putImageData(imageData, 0, 0);
+    redraw();
+    //drawGuidelines();
+    //ctx.putImageData(imageData, 0, 0);
 });
 
 undoButton.addEventListener('click', () => {

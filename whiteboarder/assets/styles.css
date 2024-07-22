@@ -19,10 +19,19 @@ body, html {
     justify-content: space-around;
     background: white;
 }
-.toolbar button {
+.toolbar .button {
+    cursor: pointer;
     font-size: 1.5rem;
     padding: 10px 0;
     border-radius: 3px;
+    text-align: center;
+    position: relative;
+}
+
+.toolbar .button .sub-buttons {
+    position: absolute;
+    left: 50px;
+    top: 0px;
 }
 
 .toolbar :not(:first-child) {
@@ -35,7 +44,7 @@ canvas {
     border: 1px solid #000;
 }
 
-button.active {
+.button.active {
     background-color: #d9dffc;
     color: #3859ff !important;
 }

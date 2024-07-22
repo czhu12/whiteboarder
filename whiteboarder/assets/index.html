@@ -13,24 +13,35 @@
 </head>
 <body>
     <div class="toolbar">
-        <button id="clear">
-            <i class="bi bi-archive"></i>
-        </button>
-        <button id="pen">
-            <i class="bi bi-pen"></i>
-        </button>
-        <button id="eraser">
-            <i class="bi bi-eraser"></i>
-        </button>
-        <button id="undo">
-            <i class="bi bi-arrow-counterclockwise"></i>
-        </button>
-        <button id="redo">
-            <i class="bi bi-arrow-clockwise"></i>
-        </button>
-        <div id="pen-sidebar" class="hidden">
-            <input type="color" id="brushColorPicker" value="#000000">
-            <input type="range" id="sizePicker" min="1" max="10" value="5">
+        <div class="button">
+            <button id="clear">
+                <i class="bi bi-archive"></i>
+            </button>
+        </div>
+        <div class="button" id="pen">
+            <button>
+                <i class="bi bi-pen"></i>
+            </button>
+
+            <div id="pen-sidebar" class="sub-buttons hidden">
+                <input type="color" id="brushColorPicker" value="#000000">
+                <input type="range" id="sizePicker" min="1" max="10" value="5">
+            </div>
+        </div>
+        <div class="button" id="eraser">
+            <button>
+                <i class="bi bi-eraser"></i>
+            </button>
+        </div>
+        <div class="button" id="undo">
+            <button>
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+        </div>
+        <div class="button" id="redo">
+            <button>
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
         </div>
     </div>
     <canvas id="whiteboard"></canvas>
