@@ -10,6 +10,7 @@ const penButton = document.getElementById('pen');
 const penSideBar = document.getElementById('pen-sidebar');
 const undoButton = document.getElementById('undo');
 const redoButton = document.getElementById('redo');
+const showModalButton = document.querySelector('#help button')
 
 let painting = false;
 let selectedButton = 'pen';
@@ -49,6 +50,9 @@ async function initializeBoard() {
         window.history.replaceState(`board/${board.id}`, `Board ${board.id}`, `/boards/${board.id}`);
     }
 
+    const location = window.location;
+    const svgUrl = "https://" + location.hostname + location.pathname + ".svg"
+    document.getElementById("example-url").value = svgUrl;
     console.log(board)
     redraw();
 }
@@ -196,6 +200,9 @@ undoButton.addEventListener('click', () => {
 redoButton.addEventListener('click', () => {
     redo();
 });
+showModalButton.addEventListener('click', () => {
+    // Show modal
+})
 
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'z') {
@@ -207,6 +214,9 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+document.querySelector('.colorPicker .color').addEventListener('click', (e) => {
+    console.log(e);
+})
 
 // Function to draw the guidelines
 function drawGuidelines() {

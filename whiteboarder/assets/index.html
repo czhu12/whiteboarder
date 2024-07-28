@@ -12,6 +12,11 @@
         crossorigin="anonymous"></script>
 </head>
 <body>
+    <div id="help">
+        <a href="#open-modal">
+            <i class="bi bi-info-circle"></i>
+        </a>
+    </div>
     <div class="toolbar">
         <div class="button">
             <button id="clear">
@@ -24,8 +29,24 @@
             </button>
 
             <div id="pen-sidebar" class="sub-buttons hidden">
-                <input type="color" id="brushColorPicker" value="#000000">
+                Thickness
                 <input type="range" id="sizePicker" min="1" max="10" value="5">
+                <div class="colorPicker">
+                    <ul>
+                        <li><button class="color" data-value="#ffffff" style="background-color: #ffffff"></button></li>
+                        <li><button class="color" data-value="#f1c40f" style="background-color: #f1c40f"></button></li>
+                        <li><button class="color" data-value="#e67e22" style="background-color: #e67e22"></button></li>
+                                                                                                
+                        <li><button class="color" data-value="#e74c3c" style="background-color: #e74c3c"></button></li>
+                        <li><button class="color" data-value="#1abc9c" style="background-color: #1abc9c"></button></li>
+                        <li><button class="color" data-value="#2ecc71" style="background-color: #2ecc71"></button></li>
+                                                                                                
+                        <li><button class="color" data-value="#3498db" style="background-color: #3498db"></button></li>
+                        <li><button class="color" data-value="#9b59b6" style="background-color: #9b59b6"></button></li>
+                        <li><button class="color" data-value="#34495e" style="background-color: #34495e"></button></li>
+                    </ul>
+                    <input type="color" id="brushColorPicker" value="#000000">
+                </div>
             </div>
         </div>
         <div class="button" id="eraser">
@@ -46,5 +67,22 @@
     </div>
     <canvas id="whiteboard"></canvas>
     <script src="/assets/script.js"></script>
+
+
+    <div id="open-modal" class="modal-window">
+        <div>
+            <a href="#" title="Close" class="modal-close">Close</a>
+            <h1>Voilà!</h1>
+            <div>A whiteboard. Anything you draw on here will be available as an SVG image if you append .svg to the URL ☝️.</div>
+            <br>
+            <div><small>Check out 👇</small></div>
+            <div>
+                <input type="text" value="" disabled="true" id="example-url" />
+            </div>
+        
+            Use the SVG in your Github README for maintaining diagram documentation. We don't really care!
+        </div>
+    </div>
+
 </body>
 </html>

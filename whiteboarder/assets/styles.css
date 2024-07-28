@@ -1,11 +1,71 @@
 /* styles.css */
-body, html {
+
+body,
+html {
     margin: 0;
     padding: 0;
     overflow: hidden;
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+html {
+    font-size: 18px;
+}
+
+body {
+    font-family: apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+        Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-weight: 600;
+    color: black;
+}
+input[type="text"] {
+    width: 100%; /* Full width */
+    padding: 12px 20px; /* Padding inside the input */
+    margin: 8px 0; /* Margin outside the input */
+    display: inline-block; /* Display as inline-block */
+    border: 1px solid #ccc; /* Light gray border */
+    border-radius: 4px; /* Rounded corners */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    font-size: 16px; /* Font size */
+    font-family: Arial, sans-serif; /* Font family */
+
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition for border and shadow */
+}
+
+#pen-sidebar {
+    width: 150px;
+    padding: 10px;
+}
+
+#pen-sidebar button {
+    background-color: red;
+    border-radius: 999px;
+    width: 20px;
+    height: 20px;
+}
+
+#pen-sidebar ul {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Create 3 equal columns */
+    gap: 10px; /* Add space between items */
+    list-style-type: none; /* Remove default list style */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+}
+
+#pen-sidebar li {
+    text-align: center; /* Center align text */
+    border: 1px solid #ccc; /* Light gray border */
+    border-radius: 4px; /* Rounded corners */
+}
+
+#help {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    font-size: 1.3rem;
 }
 
 .toolbar {
@@ -19,6 +79,7 @@ body, html {
     justify-content: space-around;
     background: white;
 }
+
 .toolbar .button {
     cursor: pointer;
     font-size: 1.5rem;
@@ -29,12 +90,13 @@ body, html {
 }
 
 .toolbar .button .sub-buttons {
+    background-color: white;
     position: absolute;
     left: 50px;
     top: 0px;
 }
 
-.toolbar :not(:first-child) {
+.toolbar .button:not(:first-child) {
     margin-top: .25rem;
 }
 
@@ -62,4 +124,100 @@ button {
 
 .hidden {
     display: none;
+}
+
+/* modal stuff */
+.modal-window {
+    position: fixed;
+    background-color: rgba(255, 255, 255, 0.25);
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 999;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+}
+
+.modal-window:target {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-window>div {
+    width: 400px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2em;
+    background: white;
+}
+
+.modal-window header {
+    font-weight: bold;
+}
+
+.modal-window h1 {
+    font-size: 150%;
+    margin: 0 0 15px;
+}
+
+.modal-close {
+    color: #aaa;
+    line-height: 50px;
+    font-size: 80%;
+    position: absolute;
+    right: 0;
+    text-align: center;
+    top: 0;
+    width: 70px;
+    text-decoration: none;
+}
+
+.modal-close:hover {
+    color: black;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.container {
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.modal-window>div {
+    border-radius: 1rem;
+}
+
+.modal-window div:not(:last-of-type) {
+    margin-bottom: 15px;
+}
+
+.logo {
+    max-width: 150px;
+    display: block;
+}
+
+small {
+    color: lightgray;
+}
+
+.btn {
+    background-color: white;
+    padding: 1em 1.5em;
+    border-radius: 0.5rem;
+    text-decoration: none;
+}
+
+.btn i {
+    padding-right: 0.3em;
 }
