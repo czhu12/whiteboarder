@@ -18,6 +18,7 @@ use redis::AsyncCommands;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+static PADDING: i32 = 10;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Point {
@@ -76,11 +77,11 @@ struct Board {
 impl Board {
     fn width(&self) -> i32 {
         let all_x: Vec<i32> = self.strokes.iter().flat_map(|stroke| stroke.points.iter().map(|point| point.x)).collect();
-        all_x.iter().max().unwrap_or(&0) - all_x.iter().min().unwrap_or(&0)
+        all_x.iter().max().unwrap_or(&0) - all_x.iter().min().unwrap_or(&0) + PADDING
     }
     fn height(&self) -> i32 {
         let all_y: Vec<i32> = self.strokes.iter().flat_map(|stroke| stroke.points.iter().map(|point| point.y)).collect();
-        all_y.iter().max().unwrap_or(&0) - all_y.iter().min().unwrap_or(&0)
+        all_y.iter().max().unwrap_or(&0) - all_y.iter().min().unwrap_or(&0) + PADDING
     }
 
     fn x_offset(&self) -> i32 {
