@@ -14,6 +14,7 @@ RUN rm src/*.rs
 
 # Copy over your source tree
 COPY whiteboarder/src ./src
+COPY whiteboarder/assets ./assets
 
 # Build your project
 RUN touch src/main.rs
@@ -30,8 +31,11 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the build artifact from the build stage
 COPY --from=builder /whiteboarder/target/release/whiteboarder /usr/local/bin/whiteboarder
+COPY --from=builder /whiteboarder/assets /usr/local/bin/assets
 
 # Set the startup command to run your binary
+WORKDIR /usr/local/bin
+
 CMD ["whiteboarder"]
 
 # Expose the port that the application runs on
