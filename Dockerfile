@@ -1,14 +1,43 @@
-# Use an official GCC image as a parent image
-FROM gcc:latest
+# Start from the official Rust image
+FROM rust:latest as builder
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
+# Create a new empty shell project
+RUN USER=root cargo new --bin whiteboarder
+WORKDIR /whiteboarder
 
-# Copy the current directory contents into the container at /usr/src/app
-COPY . .
+# Copy over your manifests
+COPY whiteboarder/Cargo.toml whiteboarder/Cargo.lock ./
 
-# Build the application
-RUN make
+# This build step will cache your dependencies
+RUN cargo build --release
+RUN rm src/*.rs
 
-# Run the application
-CMD ["make", "run"]
+# Copy over your source tree
+COPY whiteboarder/src ./src
+COPY whiteboarder/assets ./assets
+
+# Build your project
+RUN touch src/main.rs
+RUN cargo build --release
+
+# Use the same Rust image for the runtime to ensure compatibility
+FROM rust:latest
+
+# Install required dependencies
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the build artifact from the build stage
+COPY --from=builder /whiteboarder/target/release/whiteboarder /usr/local/bin/whiteboarder
+COPY --from=builder /whiteboarder/assets /usr/local/bin/assets
+
+# Set the startup command to run your binary
+WORKDIR /usr/local/bin
+
+CMD ["whiteboarder"]
+
+# Expose the port that the application runs on
+EXPOSE 3000
+
