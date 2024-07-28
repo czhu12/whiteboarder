@@ -4,7 +4,7 @@
 //! cargo run -p example-hello-world
 //! ```
 
-use axum::{body::Body, extract::{Path, State}, http::{header, HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
+use axum::{middleware::{self, Next}, body::Body, extract::{Path, State}, http::{header, HeaderName, HeaderValue, StatusCode, Request}, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
 use serde::{Deserialize, Serialize};
 use tera::{Context, Tera};
 use tower_http::services::ServeFile;
@@ -100,11 +100,29 @@ struct ErrorResponse {
 }
 
 type SharedState = Arc<Mutex<redis::Client>>;
+use tracing::info;
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
+
+async fn log_request(req: Request<Body>, next: Next) -> Response {
+    let method = req.method().clone();
+    let path = req.uri().path().to_string();
+    
+    info!("Request: {} {}", method, path);
+
+    let response = next.run(req).await;
+    let status = response.status();
+    info!("Response: {}", status);
+
+    response
+}
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
     let state: SharedState = Arc::new(Mutex::new(get_redis_client()));
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .init();
 
     // build our application with a route
     let api_routes = Router::new()
@@ -116,12 +134,13 @@ async fn main() {
     let app = Router::new()
         .nest("/", api_routes)
         .route_service("/", services::ServeFile::new("assets/index.html"))
-        .nest_service("/assets", services::ServeDir::new("assets"));
+        .nest_service("/assets", services::ServeDir::new("assets"))
+        .layer(middleware::from_fn(log_request));
     
     // run it
     let port = env::var("PORT").unwrap_or("3000".into());
 
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port))
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
         .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
