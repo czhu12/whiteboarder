@@ -61,7 +61,7 @@ async fn main() {
     // run it
     let port = env::var("PORT").unwrap_or("3000".into());
 
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port))
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
         .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
