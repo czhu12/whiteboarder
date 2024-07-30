@@ -6,11 +6,12 @@ use std::sync::{Arc};
 use futures::{SinkExt, StreamExt};
 
 
-use crate::data::{AppState, RoomState, WebSocketConnect, WebSocketMessage};
+use crate::data::{AppState, RoomState, WebSocketConnect};
 
 
-pub(crate) async fn handler(ws: WebSocketUpgrade,
-                 State(state): State<Arc<AppState>>,
+pub(crate) async fn handler(
+  ws: WebSocketUpgrade,
+  State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     ws.on_upgrade(|socket| handle_socket(socket, state))
 }

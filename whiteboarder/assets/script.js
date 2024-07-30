@@ -89,7 +89,8 @@ function startPosition(e) {
     currentStroke = {
         color: brushColorPicker.value,
         size: parseInt(sizePicker.value),
-        points: []
+        points: [],
+        timestamp: Date.now()
     };
     draw(e);
 }
@@ -142,7 +143,7 @@ function draw(e) {
 function redraw() {
     drawGuidelines();
     drawCursors();
-    for (const stroke of board.strokes.concat(currentStroke)) {
+    for (const stroke of board.strokes.concat(currentStroke).filter(e => !!e)) {
         ctx.beginPath();
         ctx.lineWidth = stroke.size;
         ctx.lineCap = 'round';
@@ -328,9 +329,13 @@ function connect(boardId) {
         if (data.messagetype === "cursor") {
             if (data.payload.username !== username) {
                 collaborators[data.payload.username] = data.payload
-                redraw();
             }
+        } else if (data.messagetype === "board") {
+            console.log(data.payload)
+            // Update board value
+            board = data.payload.payload;
         }
+        redraw();
     })
 }
 
@@ -338,7 +343,6 @@ const handleMouseMove = throttleAndDebounce(function (event) {
     // Your logic here
     if (socket) {
         const data = JSON.stringify({ channel: `boards/${board.id}`, messagetype: "cursor", payload: { username, x: event.clientX, y: event.clientY } })
-        console.log(data);
         socket.send(data);
     }
 }, 50); // Adjust the wait time (in milliseconds) as needed

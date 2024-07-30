@@ -5,6 +5,7 @@
 //! ```
 
 use axum::{body::Body, extract::{Path, State}, http::{header, HeaderName, HeaderValue, StatusCode}, middleware, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
+use data::AppState;
 use serde::{Deserialize, Serialize};
 use tower_http::{services::ServeFile, trace::{DefaultMakeSpan, TraceLayer}};
 use tower::ServiceExt; // for `.oneshot()`
@@ -17,7 +18,6 @@ use redis::AsyncCommands;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
-type SharedState = Arc<Mutex<redis::Client>>;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod data;
@@ -27,9 +27,9 @@ mod websockets;
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let state: SharedState = Arc::new(Mutex::new(get_redis_client()));
-    let ws_state = Arc::new(data::AppState {
-        rooms: Mutex::new(HashMap::new())
+    let state: Arc<AppState> = Arc::new(data::AppState {
+        rooms: Mutex::new(HashMap::new()),
+        redis_client: Mutex::new(get_redis_client()),
     });
     tracing_subscriber::registry()
         .with(
@@ -46,14 +46,11 @@ async fn main() {
         .route("/api/boards/:id", get(get_board).put(put_board))
         .route("/api/boards", post(create_board))
         .route("/boards/:id", get(serve_file))
-        .with_state(state);
-    let websocket_routes = Router::new()
         .route("/ws", get(websockets::handler))
-        .with_state(ws_state);
+        .with_state(state);
 
     let app = Router::new()
         .nest("/", api_routes)
-        .nest("/", websocket_routes)
         .route_service("/", services::ServeFile::new("assets/index.html"))
         .nest_service("/assets", services::ServeDir::new("assets"))
         .layer(
@@ -73,7 +70,7 @@ async fn main() {
 
 async fn serve_file(
     Path(id): Path<String>,
-    State(state): State<SharedState>,
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // `File` implements `AsyncRead`
     let mut headers = Vec::new();
@@ -81,7 +78,7 @@ async fn serve_file(
     if id.ends_with(".svg") {
         let parts: Vec<&str> = id.split('.').collect();
         if let Some(board_id) = parts.get(0) {
-            let mut con = state.lock().await.get_multiplexed_async_connection().await.unwrap();
+            let mut con = state.redis_client.lock().await.get_multiplexed_async_connection().await.unwrap();
             let key = format!("board/{}", board_id);
             let result: Result<String, redis::RedisError> = con.get(&key).await;
             let mut board = serde_json::from_str::<data::Board>(&result.unwrap()).unwrap();
@@ -124,17 +121,34 @@ fn get_redis_client() -> redis::Client {
 
 async fn put_board(
     Path(id): Path<String>,
-    State(state): State<SharedState>,
+    State(state): State<Arc<AppState>>,
     Json(board): Json<data::Board>,
 ) -> impl IntoResponse {
     let board_data = serde_json::to_string(&board).unwrap();
-    let mut conn = state.lock().await.get_multiplexed_async_connection().await.unwrap();
+    // Send out the board data into redis
+    let mut rooms = state.rooms.lock().await;
+    let channel = format!("boards/{}", id);
+    let room = rooms.get(&channel);
+    match room {
+        Some(r) => {
+            let payload = data::WebSocketMessage {
+                messagetype: "board".to_string(),
+                channel: channel,
+                payload: data::WebSocketPayload::BoardUpdate(board)
+            };
+            let value = serde_json::to_string(&payload).unwrap();
+            let _ = r.tx.clone().send(value);
+        },
+        None => (),
+    }
+
+    let mut conn = state.redis_client.lock().await.get_multiplexed_async_connection().await.unwrap();
     let _: () = conn.set(format!("board/{}", id), board_data).await.unwrap();
     StatusCode::OK.into_response()
 }
 
 async fn create_board(
-    State(state): State<SharedState>,
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let id = Uuid::new_v4().to_string();
     let board = data::Board {
@@ -142,7 +156,7 @@ async fn create_board(
         strokes: vec![],
     };
     let board_data = serde_json::to_string(&board).unwrap();
-    let mut conn = state.lock().await.get_multiplexed_async_connection().await.unwrap();
+    let mut conn = state.redis_client.lock().await.get_multiplexed_async_connection().await.unwrap();
     let _: () = conn.set(format!("board/{}", id), board_data).await.unwrap();
 
     Json(board)
@@ -150,9 +164,9 @@ async fn create_board(
 
 async fn get_board(
     Path(id): Path<String>,
-    State(state): State<SharedState>,
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    let mut con = state.lock().await.get_multiplexed_async_connection().await.unwrap();
+    let mut con = state.redis_client.lock().await.get_multiplexed_async_connection().await.unwrap();
 
     let key = format!("board/{}", id);
     let result: Result<String, redis::RedisError> = con.get(&key).await;

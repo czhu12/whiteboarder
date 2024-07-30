@@ -5,14 +5,15 @@ use tokio::sync::{broadcast};
 use serde_json::Value;
 
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Point {
     pub x: i32,
     pub y: i32
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Stroke {
+    pub timestamp: i64,
     pub color: String,
     pub size: i32,
     pub points: Vec<Point>,
@@ -53,7 +54,7 @@ impl TeraStroke {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Board {
     pub id: String,
     pub strokes: Vec<Stroke>
@@ -85,9 +86,9 @@ pub struct ErrorResponse {
     pub error: String,
 }
 
-
 pub struct AppState {
     pub rooms: Mutex<HashMap<String, RoomState>>,
+    pub redis_client: Mutex<redis::Client>
 }
 
 pub struct RoomState {
@@ -103,7 +104,6 @@ impl RoomState {
         }
     }
 }
-
 
 #[derive(Deserialize)]
 pub struct WebSocketConnect {
@@ -123,6 +123,9 @@ pub struct WebSocketMessage {
 pub enum WebSocketPayload {
     #[serde(rename = "cursor")]
     Cursor(CursorPayload),
+
+    #[serde(rename = "board")]
+    BoardUpdate(Board),
 
     #[serde(rename = "unknown")]
     Unknown(Value), // Fallback for unknown message types
