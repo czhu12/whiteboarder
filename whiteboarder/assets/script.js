@@ -331,7 +331,6 @@ function connect(boardId) {
                 collaborators[data.payload.username] = data.payload
             }
         } else if (data.messagetype === "board") {
-            console.log(data.payload)
             // Update board value
             board = data.payload.payload;
         }

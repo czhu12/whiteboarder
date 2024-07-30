@@ -1,2 +1,2 @@
-![alt text](https://whiteboarder.chriszhu.me/boards/cd218256-cb1a-4912-9ad6-e46b5f61be85.svg)
+[![Whiteboard](https://whiteboarder.chriszhu.me/boards/6207ceff-dcc2-4613-b5aa-d62f4731ed53.svg?type=Date)](https://whiteboarder.chriszhu.me/boards/6207ceff-dcc2-4613-b5aa-d62f4731ed53)
 
