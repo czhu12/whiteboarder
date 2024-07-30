@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tokio::sync::{broadcast};
+use serde_json::Value;
 
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -109,3 +110,28 @@ pub struct WebSocketConnect {
     pub username: String,
     pub channel: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WebSocketMessage {
+    pub messagetype: String,
+    pub channel: String,
+    pub payload: WebSocketPayload,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "messagetype", content = "payload")]
+pub enum WebSocketPayload {
+    #[serde(rename = "cursor")]
+    Cursor(CursorPayload),
+
+    #[serde(rename = "unknown")]
+    Unknown(Value), // Fallback for unknown message types
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CursorPayload {
+    username: String,
+    x: i32,
+    y: i32,
+}
+

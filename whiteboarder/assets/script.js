@@ -1,16 +1,40 @@
+function throttleAndDebounce(func, wait) {
+  let timeout;
+  let lastExecution = 0;
+
+  return function(...args) {
+    const context = this;
+    const now = Date.now();
+
+    const executeFunction = () => {
+      lastExecution = now;
+      func.apply(context, args);
+    };
+
+    clearTimeout(timeout);
+
+    if (now - lastExecution >= wait) {
+      executeFunction();
+    } else {
+      timeout = setTimeout(executeFunction, wait);
+    }
+  };
+}
+
+
 // script.js
 const canvas = document.getElementById('whiteboard');
 const ctx = canvas.getContext('2d');
 const clearButton = document.getElementById('clear');
 const brushColorPicker = document.getElementById('brushColorPicker');
-const eraserColorPicker = document.getElementById('eraserColorPicker');
 const sizePicker = document.getElementById('sizePicker');
 const eraserButton = document.getElementById('eraser');
 const penButton = document.getElementById('pen');
 const penSideBar = document.getElementById('pen-sidebar');
 const undoButton = document.getElementById('undo');
 const redoButton = document.getElementById('redo');
-const showModalButton = document.querySelector('#help button')
+const showModalButton = document.querySelector('#help i');
+const collaborators = {};
 
 let painting = false;
 let selectedButton = 'pen';
@@ -53,7 +77,6 @@ async function initializeBoard() {
     const location = window.location;
     const svgUrl = "https://" + location.hostname + location.pathname + ".svg"
     document.getElementById("example-url").value = svgUrl;
-    console.log(board)
     redraw();
 }
 initializeBoard();
@@ -105,19 +128,21 @@ function draw(e) {
 
     currentStroke.points.push({ x, y });
 
-    ctx.lineWidth = currentStroke.size;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = currentStroke.color;
+    //ctx.lineWidth = currentStroke.size;
+    //ctx.lineCap = 'round';
+    //ctx.strokeStyle = currentStroke.color;
 
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+    //ctx.lineTo(x, y);
+    //ctx.stroke();
+    //ctx.beginPath();
+    //ctx.moveTo(x, y);
+    redraw();
 }
 
 function redraw() {
     drawGuidelines();
-    for (const stroke of board.strokes) {
+    drawCursors();
+    for (const stroke of board.strokes.concat(currentStroke)) {
         ctx.beginPath();
         ctx.lineWidth = stroke.size;
         ctx.lineCap = 'round';
@@ -130,6 +155,23 @@ function redraw() {
         }
     }
     ctx.beginPath();
+}
+
+function drawCursors() {
+    for (const [collaboraterUsername, cursor] of Object.entries(collaborators)) {
+        const {x, y} = cursor;
+        ctx.font = "12px Arial";
+        ctx.fillStyle = "purple";
+        ctx.fillText(collaboraterUsername, x + 20, y + 20);
+        ctx.beginPath();
+        ctx.moveTo(x, y); // Top left corner
+        ctx.lineTo(x + 16, y + 8); // Bottom left prong
+        ctx.lineTo(x + 8, y + 8); // Midpoint
+        ctx.lineTo(x + 8, y + 16); // Bottom right prong
+        ctx.lineTo(x, y); // Back to top left corner
+        ctx.closePath();
+        ctx.fill();
+    }
 }
 
 function eraseStroke(e) {
@@ -214,9 +256,9 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-document.querySelector('.colorPicker .color').addEventListener('click', (e) => {
-    console.log(e);
-})
+//document.querySelectorAll('.colorPicker .color').addEventListener('click', (e) => {
+//    brushColorPicker.value = e.target.dataset
+//})
 
 // Function to draw the guidelines
 function drawGuidelines() {
@@ -252,3 +294,57 @@ function drawGuidelines() {
 }
 
 drawGuidelines();
+
+// Websockets
+
+// Arrays of adjectives and animals
+const adjectives = ['Happy', 'Brave', 'Clever', 'Swift', 'Calm', 'Fierce', 'Gentle', 'Wise', 'Bold', 'Sly'];
+const animals = ['Lion', 'Tiger', 'Bear', 'Wolf', 'Fox', 'Eagle', 'Hawk', 'Shark', 'Panther', 'Falcon'];
+
+// Function to generate a random name
+function generateRandomName() {
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+    return `${randomAdjective} ${randomAnimal}`;
+}
+
+// Generate and log a random name
+let socket;
+const username = generateRandomName();
+
+function connect(boardId) {
+    const origin = window.location.origin;
+    const wsUrl = `${origin.replace(/^http/, 'ws')}/ws`;
+    socket = new WebSocket(wsUrl);
+
+    socket.addEventListener("open", () => {
+        console.log(`Connecting as ${username}`)
+        const data = JSON.stringify({username, channel: `boards/${boardId}`})
+        socket.send(data);
+    });
+
+    socket.addEventListener('message', function (event) {
+        const data = JSON.parse(event.data);
+        if (data.messagetype === "cursor") {
+            if (data.payload.username !== username) {
+                collaborators[data.payload.username] = data.payload
+                redraw();
+            }
+        }
+    })
+}
+
+const handleMouseMove = throttleAndDebounce(function (event) {
+    // Your logic here
+    if (socket) {
+        const data = JSON.stringify({ channel: `boards/${board.id}`, messagetype: "cursor", payload: { username, x: event.clientX, y: event.clientY } })
+        console.log(data);
+        socket.send(data);
+    }
+}, 50); // Adjust the wait time (in milliseconds) as needed
+
+document.onmousemove = handleMouseMove;
+
+if (match) {
+    connect(match[1]);
+}

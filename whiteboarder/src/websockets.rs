@@ -6,7 +6,7 @@ use std::sync::{Arc};
 use futures::{SinkExt, StreamExt};
 
 
-use crate::data::{AppState, RoomState, WebSocketConnect};
+use crate::data::{AppState, RoomState, WebSocketConnect, WebSocketMessage};
 
 
 pub(crate) async fn handler(ws: WebSocketUpgrade,
@@ -37,8 +37,10 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
       let mut rooms = state.rooms.lock().await;
       let room = rooms.entry(connect.channel).or_insert_with(RoomState::new);
       tx = Some(room.tx.clone());
+      break;
     }
   }
+  println!("Connected user {}", username);
   let tx = tx.unwrap();
   let mut rx = tx.subscribe();
 
@@ -51,13 +53,13 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
     }
   });
 
-  // Whenever the connected clients sends something, we broadcast out to the tx
+  // Whenever the connected client sends something, we broadcast out to the tx
   let mut send_messages = {
     let tx = tx.clone();
-    let name = username.clone();
+
     tokio::spawn(async move {
         while let Some(Ok(Message::Text(text))) = receiver.next().await {
-            let _ = tx.send(format!("{}: {}", name, text));
+            let _ = tx.send(text);
         }
     })
   };

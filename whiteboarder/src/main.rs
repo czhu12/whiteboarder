@@ -4,9 +4,9 @@
 //! cargo run -p example-hello-world
 //! ```
 
-use axum::{body::Body, extract::{Path, State}, http::{header, HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
+use axum::{body::Body, extract::{Path, State}, http::{header, HeaderName, HeaderValue, StatusCode}, middleware, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
 use serde::{Deserialize, Serialize};
-use tower_http::services::ServeFile;
+use tower_http::{services::ServeFile, trace::{DefaultMakeSpan, TraceLayer}};
 use tower::ServiceExt; // for `.oneshot()`
 use tokio_util::io::ReaderStream;
 
@@ -18,6 +18,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 type SharedState = Arc<Mutex<redis::Client>>;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod data;
 mod drawing;
@@ -30,6 +31,15 @@ async fn main() {
     let ws_state = Arc::new(data::AppState {
         rooms: Mutex::new(HashMap::new())
     });
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "example_websockets=debug,tower_http=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+
 
     // build our application with a route
     let api_routes = Router::new()
@@ -45,8 +55,12 @@ async fn main() {
         .nest("/", api_routes)
         .nest("/", websocket_routes)
         .route_service("/", services::ServeFile::new("assets/index.html"))
-        .nest_service("/assets", services::ServeDir::new("assets"));
-    
+        .nest_service("/assets", services::ServeDir::new("assets"))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::default().include_headers(true)),
+        );
+
     // run it
     let port = env::var("PORT").unwrap_or("3000".into());
 
