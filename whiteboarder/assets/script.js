@@ -39,6 +39,8 @@ const sizePicker = document.getElementById('sizePicker');
 const eraserButton = document.getElementById('eraser');
 const penButton = document.getElementById('pen');
 const penSideBar = document.getElementById('pen-sidebar');
+penSideBar.style.left = `${penButton.getBoundingClientRect().x + 70}px`;
+penSideBar.style.top = `${penButton.getBoundingClientRect().y}px`;
 const undoButton = document.getElementById('undo');
 const redoButton = document.getElementById('redo');
 const showModalButton = document.querySelector('#help i');
@@ -262,9 +264,11 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-//document.querySelectorAll('.colorPicker .color').addEventListener('click', (e) => {
-//    brushColorPicker.value = e.target.dataset
-//})
+document.querySelectorAll('.colorPicker .color').forEach(el => {
+    el.addEventListener('click', (e) => {
+        brushColorPicker.value = e.target.dataset.value
+    })
+})
 
 // Function to draw the guidelines
 function drawGuidelines() {

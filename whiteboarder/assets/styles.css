@@ -1,4 +1,7 @@
 /* styles.css */
+h1,h2,h3,h4,h5,h6 {
+    margin: 0;
+}
 
 body,
 html {
@@ -35,8 +38,16 @@ input[type="text"] {
 }
 
 #pen-sidebar {
+    position: fixed;
+    background-color: white;
+    border-radius: 10px;
     width: 150px;
     padding: 10px;
+    text-align: center;
+}
+
+#pen-sidebar > * {
+    margin-top: 5px;
 }
 
 #pen-sidebar button {
@@ -57,8 +68,11 @@ input[type="text"] {
 
 #pen-sidebar li {
     text-align: center; /* Center align text */
-    border: 1px solid #ccc; /* Light gray border */
     border-radius: 4px; /* Rounded corners */
+}
+
+#pen-sidebar .color {
+    border: 1px solid #ccc; /* Light gray border */
 }
 
 #help {
