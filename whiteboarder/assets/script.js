@@ -44,7 +44,7 @@ const redoButton = document.getElementById('redo');
 const showModalButton = document.querySelector('#help i');
 const collaborators = {};
 
-let painting = false;
+let hasMouseDown = false;
 let selectedButton = 'pen';
 let board = {
     id: null,
@@ -93,7 +93,6 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 function startPosition(e) {
-    painting = true;
     currentStroke = {
         color: brushColorPicker.value,
         size: parseInt(sizePicker.value),
@@ -120,7 +119,6 @@ function redo() {
 }
 
 function endPosition() {
-    painting = false;
     ctx.beginPath();
     if (currentStroke) {
         board.strokes.push(currentStroke);
@@ -130,21 +128,12 @@ function endPosition() {
 }
 
 function draw(e) {
-    if (!painting) return;
+    if (!hasMouseDown) return;
 
     const x = e.clientX;
     const y = e.clientY;
 
     currentStroke.points.push({ x, y });
-
-    //ctx.lineWidth = currentStroke.size;
-    //ctx.lineCap = 'round';
-    //ctx.strokeStyle = currentStroke.color;
-
-    //ctx.lineTo(x, y);
-    //ctx.stroke();
-    //ctx.beginPath();
-    //ctx.moveTo(x, y);
     redraw();
 }
 
@@ -187,6 +176,7 @@ function drawCursors() {
 }
 
 function eraseStroke(e) {
+    if (!hasMouseDown) return;
     const x = e.clientX;
     const y = e.clientY;
     const tolerance = sizePicker.value * 3; // Increase the tolerance area
@@ -204,13 +194,17 @@ function eraseStroke(e) {
 }
 
 canvas.addEventListener('mousedown', (e) => {
+    hasMouseDown = true;
     if (selectedButton === 'eraser') {
         eraseStroke(e);
     } else {
         startPosition(e);
     }
 });
-canvas.addEventListener('mouseup', endPosition);
+canvas.addEventListener('mouseup', (e) => {
+    hasMouseDown = false;
+    endPosition(e)
+});
 canvas.addEventListener('mousemove', (e) => {
     if (selectedButton === 'eraser') {
         eraseStroke(e);
