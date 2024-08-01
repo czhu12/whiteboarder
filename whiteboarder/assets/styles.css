@@ -221,3 +221,12 @@ small {
 .btn i {
     padding-right: 0.3em;
 }
+
+.cursor {
+    position: fixed;
+    pointer-events: none; /* make it invisible to mouse events */
+    font-family: Arial;
+    font-size: 12px;
+    color: purple;
+    z-index: 10;
+}

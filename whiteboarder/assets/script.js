@@ -1,3 +1,11 @@
+function convertToSnakeCase(text) {
+    // Convert the text to lowercase
+    let lowerCased = text.toLowerCase();
+    // Replace spaces with underscores
+    let snakeCased = lowerCased.replace(/\s+/g, '_');
+    return snakeCased;
+}
+
 function throttleAndDebounce(func, wait) {
   let timeout;
   let lastExecution = 0;
@@ -142,7 +150,6 @@ function draw(e) {
 
 function redraw() {
     drawGuidelines();
-    drawCursors();
     for (const stroke of board.strokes.concat(currentStroke).filter(e => !!e)) {
         ctx.beginPath();
         ctx.lineWidth = stroke.size;
@@ -159,19 +166,23 @@ function redraw() {
 }
 
 function drawCursors() {
+    // Set the position of the cursor
     for (const [collaboraterUsername, cursor] of Object.entries(collaborators)) {
+        const elementId = convertToSnakeCase(collaboraterUsername);
+        if (!document.getElementById(elementId)) {
+            const parent = document.getElementById('cursors');
+            const element = `
+                <div class="cursor" id="${elementId}">
+                    <i class="bi bi-pen-fill"></i>
+                    ${collaboraterUsername}
+                </div>
+            `
+            parent.insertAdjacentHTML('beforeend', element)
+        }
         const {x, y} = cursor;
-        ctx.font = "12px Arial";
-        ctx.fillStyle = "purple";
-        ctx.fillText(collaboraterUsername, x + 20, y + 20);
-        ctx.beginPath();
-        ctx.moveTo(x, y); // Top left corner
-        ctx.lineTo(x + 16, y + 8); // Bottom left prong
-        ctx.lineTo(x + 8, y + 8); // Midpoint
-        ctx.lineTo(x + 8, y + 16); // Bottom right prong
-        ctx.lineTo(x, y); // Back to top left corner
-        ctx.closePath();
-        ctx.fill();
+        const element = document.getElementById(elementId)
+        element.style.left = `${x+10}px`;
+        element.style.top = `${y+10}px`;
     }
 }
 
@@ -328,13 +339,15 @@ function connect(boardId) {
         const data = JSON.parse(event.data);
         if (data.messagetype === "cursor") {
             if (data.payload.username !== username) {
+                console.log(data.payload)
                 collaborators[data.payload.username] = data.payload
+                drawCursors();
             }
         } else if (data.messagetype === "board") {
             // Update board value
             board = data.payload.payload;
+            redraw();
         }
-        redraw();
     })
 }
 
