@@ -1,5 +1,5 @@
 # Start from the official Rust image
-FROM rust:latest as builder
+FROM --platform=linux/amd64 rust:latest as builder
 
 # Create a new empty shell project
 RUN USER=root cargo new --bin whiteboarder
@@ -21,7 +21,7 @@ RUN touch src/main.rs
 RUN cargo build --release
 
 # Use the same Rust image for the runtime to ensure compatibility
-FROM rust:latest
+FROM --platform=linux/amd64 rust:latest
 
 # Install required dependencies
 RUN apt-get update && apt-get install -y \
