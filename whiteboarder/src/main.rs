@@ -115,6 +115,7 @@ async fn serve_file(
 
 fn get_redis_client() -> redis::Client {
     let redis_url = env::var("REDIS_URL").unwrap_or("redis://127.0.0.1".into());
+    println!("Connecting to redis: {}", redis_url);
 
     return redis::Client::open(redis_url).unwrap();
 }
