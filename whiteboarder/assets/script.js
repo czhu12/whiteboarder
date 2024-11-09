@@ -87,6 +87,7 @@ async function initializeBoard() {
     const location = window.location;
     const svgUrl = "https://" + location.hostname + location.pathname + ".svg"
     document.getElementById("example-url").value = svgUrl;
+    document.getElementById("iframe-url").innerHTML = svgUrl;
     redraw();
 }
 initializeBoard();
