@@ -85,9 +85,8 @@ async function initializeBoard() {
     }
 
     const location = window.location;
-    const svgUrl = "https://" + location.hostname + location.pathname + ".svg"
+    const svgUrl = "https://" + location.hostname + location.pathname + ".svg?bg=white"
     document.getElementById("example-url").value = svgUrl;
-    document.getElementById("iframe-url").innerHTML = svgUrl;
     redraw();
 }
 initializeBoard();

@@ -4,7 +4,7 @@
 //! cargo run -p example-hello-world
 //! ```
 
-use axum::{body::Body, extract::{Path, State}, http::{header, HeaderName, HeaderValue, StatusCode}, middleware, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
+use axum::{body::Body, extract::{Path, State, Query}, http::{header, HeaderName, HeaderValue, StatusCode}, middleware, response::{IntoResponse, Response}, routing::{get, post, put}, Json, Router};
 use data::AppState;
 use serde::{Deserialize, Serialize};
 use tower_http::{services::ServeFile, trace::{DefaultMakeSpan, TraceLayer}};
@@ -71,6 +71,7 @@ async fn main() {
 async fn serve_file(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
     // `File` implements `AsyncRead`
     let mut headers = Vec::new();
@@ -82,7 +83,7 @@ async fn serve_file(
             let key = format!("board/{}", board_id);
             let result: Result<String, redis::RedisError> = con.get(&key).await;
             let mut board = serde_json::from_str::<data::Board>(&result.unwrap()).unwrap();
-            let result = drawing::draw_svg(&mut board);
+            let result = drawing::draw_svg(&mut board, params.get("bg").cloned());
             body = Body::from(result);
             headers.push((HeaderName::from_static("content-type"), "image/svg+xml"));
         } else {
