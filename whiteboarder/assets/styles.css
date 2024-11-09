@@ -162,8 +162,10 @@ button {
 }
 
 .modal-window>div {
-    width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* Added subtle drop shadow */
     position: absolute;
+    width: 80%;
+    max-width: 600px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
