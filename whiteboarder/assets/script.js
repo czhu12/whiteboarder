@@ -79,6 +79,7 @@ async function initializeBoard() {
     if (match) {
         board = await loadBoard(match[1]);
     } else {
+        showModalButton.click();
         board = await createBoard();
         window.history.replaceState(`board/${board.id}`, `Board ${board.id}`, `/boards/${board.id}`);
     }
@@ -257,9 +258,6 @@ undoButton.addEventListener('click', () => {
 redoButton.addEventListener('click', () => {
     redo();
 });
-showModalButton.addEventListener('click', () => {
-    // Show modal
-})
 
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'z') {
