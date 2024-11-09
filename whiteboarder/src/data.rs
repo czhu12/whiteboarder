@@ -127,6 +127,9 @@ pub enum WebSocketPayload {
     #[serde(rename = "board")]
     BoardUpdate(Board),
 
+    #[serde(rename = "userleft")]
+    UserLeft(String),
+
     #[serde(rename = "unknown")]
     Unknown(Value), // Fallback for unknown message types
 }

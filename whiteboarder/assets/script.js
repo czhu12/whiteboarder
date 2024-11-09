@@ -29,7 +29,6 @@ function throttleAndDebounce(func, wait) {
   };
 }
 
-
 // script.js
 const canvas = document.getElementById('whiteboard');
 const ctx = canvas.getContext('2d');
@@ -156,6 +155,12 @@ function redraw() {
     ctx.beginPath();
 }
 
+function deleteCursor(username) {
+    const elementId = convertToSnakeCase(username);
+    const element = document.getElementById(elementId);
+    element.remove();
+}
+
 function drawCursors() {
     // Set the position of the cursor
     for (const [collaboraterUsername, cursor] of Object.entries(collaborators)) {
@@ -203,10 +208,12 @@ canvas.addEventListener('mousedown', (e) => {
         startPosition(e);
     }
 });
+
 canvas.addEventListener('mouseup', (e) => {
     hasMouseDown = false;
     endPosition(e)
 });
+
 canvas.addEventListener('mousemove', (e) => {
     if (selectedButton === 'eraser') {
         eraseStroke(e);
@@ -315,7 +322,7 @@ const animals = ['Lion', 'Tiger', 'Bear', 'Wolf', 'Fox', 'Eagle', 'Hawk', 'Shark
 function generateRandomName() {
     const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
-    return `${randomAdjective} ${randomAnimal}`;
+    return `${randomAdjective} ${randomAnimal} ${Math.floor(Math.random() * 1000)}`;
 }
 
 // Generate and log a random name
@@ -337,7 +344,6 @@ function connect(boardId) {
         const data = JSON.parse(event.data);
         if (data.messagetype === "cursor") {
             if (data.payload.username !== username) {
-                console.log(data.payload)
                 collaborators[data.payload.username] = data.payload
                 drawCursors();
             }
@@ -345,14 +351,20 @@ function connect(boardId) {
             // Update board value
             board = data.payload.payload;
             redraw();
+        } else if (data.messagetype === "userleft") {
+            delete collaborators[data.payload.payload];
+            deleteCursor(data.payload.payload);
         }
     })
 }
 
 const handleMouseMove = throttleAndDebounce(function (event) {
-    // Your logic here
     if (socket) {
-        const data = JSON.stringify({ channel: `boards/${board.id}`, messagetype: "cursor", payload: { username, x: event.clientX, y: event.clientY } })
+        const data = JSON.stringify({
+            channel: `boards/${board.id}`,
+            messagetype: "cursor",
+            payload: { username, x: event.clientX, y: event.clientY }
+        })
         socket.send(data);
     }
 }, 50); // Adjust the wait time (in milliseconds) as needed

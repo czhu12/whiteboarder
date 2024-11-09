@@ -6,7 +6,7 @@ use std::sync::{Arc};
 use futures::{SinkExt, StreamExt};
 
 
-use crate::data::{AppState, RoomState, WebSocketConnect};
+use crate::data::{AppState, RoomState, WebSocketConnect, WebSocketMessage, WebSocketPayload};
 
 
 pub(crate) async fn handler(
@@ -37,20 +37,24 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
       channel = connect.channel.clone();
       let mut rooms = state.rooms.lock().await;
       let room = rooms.entry(connect.channel).or_insert_with(RoomState::new);
+      // Add username to room
+      let mut users = room.users.lock().await;
+      users.insert(username.clone());
       tx = Some(room.tx.clone());
       break;
     }
   }
-  println!("Connected user {}", username);
+  println!("Connected user {} / {}", username, channel);
   let tx = tx.unwrap();
   let mut rx = tx.subscribe();
 
   // Whenever someone else sends a message, forward it to the client.
+  let u = username.clone();
   let mut recv_messages = tokio::spawn(async move {
     while let Ok(msg) = rx.recv().await {
-        if sender.send(Message::Text(msg)).await.is_err() {
-            break;
-        }
+      if sender.send(Message::Text(msg)).await.is_err() {
+        break;
+      }
     }
   });
 
@@ -58,10 +62,11 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
   let mut send_messages = {
     let tx = tx.clone();
 
+    let u2 = username.clone();
     tokio::spawn(async move {
-        while let Some(Ok(Message::Text(text))) = receiver.next().await {
-            let _ = tx.send(text);
-        }
+      while let Some(Ok(Message::Text(text))) = receiver.next().await {
+        let _ = tx.send(text);
+      }
     })
   };
 
@@ -71,7 +76,13 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
   };
 
   let left = format!("{} left the chat!", username);
-  let _ = tx.send(left);
+  let payload = WebSocketMessage {
+      messagetype: "userleft".to_string(),
+      channel: channel.clone(),
+      payload: WebSocketPayload::UserLeft(username.clone())
+  };
+  let value = serde_json::to_string(&payload).unwrap();
+  let _ = tx.send(value);
   let mut rooms = state.rooms.lock().await;
   rooms.get_mut(&channel).unwrap().users.lock().await.remove(&username);
 
