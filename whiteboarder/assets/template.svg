@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" style="background-color: white">
 {% for stroke in strokes %}
   <polyline points="{{stroke.polyline}}" stroke="{{stroke.color}}" fill="none" stroke-width="{{stroke.size}}" stroke-linejoin="round" stroke-linecap="round" />
 {% endfor %}
