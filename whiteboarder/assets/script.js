@@ -95,14 +95,14 @@ initializeBoard();
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-function startPosition(e) {
+function startPosition(coords) {
     currentStroke = {
         color: brushColorPicker.value,
         size: parseInt(sizePicker.value),
         points: [],
         timestamp: Date.now()
     };
-    draw(e);
+    draw(coords);
 }
 
 function undo() {
@@ -130,13 +130,12 @@ function endPosition() {
     }
 }
 
-function draw(e) {
+function draw(coords) {
     if (!hasMouseDown) return;
 
-    const x = e.clientX;
-    const y = e.clientY;
+    const { x, y } = coords;
 
-    currentStroke.points.push({ x, y });
+    currentStroke.points.push({ x: parseInt(x), y: parseInt(y) });
     redraw();
 }
 
@@ -184,11 +183,10 @@ function drawCursors() {
     }
 }
 
-function eraseStroke(e) {
+function eraseStroke(coords) {
     if (!hasMouseDown) return;
-    const x = e.clientX;
-    const y = e.clientY;
-    const tolerance = sizePicker.value * 3; // Increase the tolerance area
+    const { x, y } = coords;
+    const tolerance = sizePicker.value * 3;
 
     board.strokes = board.strokes.filter(stroke => {
         return !stroke.points.some(point => {
@@ -199,30 +197,60 @@ function eraseStroke(e) {
     });
 
     redraw();
-    saveBoard(); // Call the save function after erasing a stroke
+    saveBoard();
 }
 
-canvas.addEventListener('mousedown', (e) => {
+// Helper function to get coordinates from either mouse or touch event
+function getCoordinates(e) {
+    if (e.touches) {
+        return {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        };
+    }
+    return {
+        x: e.clientX,
+        y: e.clientY
+    };
+}
+
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('touchstart', handleStart);
+
+canvas.addEventListener('mouseup', handleEnd);
+canvas.addEventListener('touchend', handleEnd);
+
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('touchmove', handleMove);
+
+function handleStart(e) {
+    e.preventDefault(); // Prevent scrolling on touch devices
     hasMouseDown = true;
+    const coords = getCoordinates(e);
+    
     if (selectedButton === 'eraser') {
-        eraseStroke(e);
+        eraseStroke(coords);
     } else {
-        startPosition(e);
+        startPosition(coords);
     }
-});
+}
 
-canvas.addEventListener('mouseup', (e) => {
+function handleEnd(e) {
+    e.preventDefault();
     hasMouseDown = false;
-    endPosition(e)
-});
+    endPosition();
+}
 
-canvas.addEventListener('mousemove', (e) => {
+function handleMove(e) {
+    e.preventDefault();
+    const coords = getCoordinates(e);
+    
     if (selectedButton === 'eraser') {
-        eraseStroke(e);
+        eraseStroke(coords);
     } else {
-        draw(e);
+        draw(coords);
     }
-});
+}
 
 clearButton.addEventListener('click', () => {
     drawGuidelines();
