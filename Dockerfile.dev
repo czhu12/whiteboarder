@@ -17,4 +17,4 @@ RUN cd whiteboarder && touch src/main.rs
 EXPOSE 3000
 
 # Rebuild and restart on file changes
-CMD ["cargo", "watch", "--workdir", "whiteboarder", "-x", "run"]
+CMD ["cargo", "watch", "--poll", "--workdir", "whiteboarder", "-x", "run"]
