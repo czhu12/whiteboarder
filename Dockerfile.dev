@@ -2,21 +2,19 @@ FROM --platform=linux/amd64 rust:latest
 
 RUN cargo install cargo-watch
 
-WORKDIR /whiteboarder
+WORKDIR /app
 
 # Copy manifests first to cache dependencies
-COPY whiteboarder/Cargo.toml whiteboarder/Cargo.lock ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build
-RUN rm src/*.rs
+COPY whiteboarder/Cargo.toml whiteboarder/Cargo.lock ./whiteboarder/
+RUN cd whiteboarder && mkdir src && echo "fn main() {}" > src/main.rs && cargo build && rm src/*.rs
 
 # Copy the full source
-COPY whiteboarder/src ./src
-COPY whiteboarder/assets ./assets
+COPY whiteboarder/src ./whiteboarder/src
+COPY whiteboarder/assets ./whiteboarder/assets
 
-RUN touch src/main.rs
+RUN cd whiteboarder && touch src/main.rs
 
 EXPOSE 3000
 
 # Rebuild and restart on file changes
-CMD ["cargo", "watch", "-x", "run"]
+CMD ["cargo", "watch", "--workdir", "whiteboarder", "-x", "run"]
