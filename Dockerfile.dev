@@ -2,6 +2,11 @@ FROM --platform=linux/amd64 rust:latest
 
 RUN cargo install cargo-watch
 
+# Install Node.js and Claude Code
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g @anthropic-ai/claude-code
+
 WORKDIR /app
 
 # Copy manifests first to cache dependencies
