@@ -49,8 +49,12 @@ async fn main() {
         .route("/ws", get(websockets::handler))
         .with_state(state);
 
+    let health_routes = Router::new()
+        .route("/health", get(health));
+
     let app = Router::new()
         .nest("/", api_routes)
+        .merge(health_routes)
         .route_service("/", services::ServeFile::new("assets/index.html"))
         .nest_service("/assets", services::ServeDir::new("assets"))
         .layer(
@@ -162,6 +166,10 @@ async fn create_board(
     let _: () = conn.set(format!("board/{}", id), board_data).await.unwrap();
 
     Json(board)
+}
+
+async fn health() -> impl IntoResponse {
+    StatusCode::OK
 }
 
 async fn get_board(
